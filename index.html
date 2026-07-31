@@ -8,6 +8,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
 })(window,document,'script','dataLayer','GTM-KRV9NLT2');</script>
 <!-- End Google Tag Manager -->
+<!-- Atribuição: captura UTMs/click-ids na chegada e guarda na sessão -->
+<script>(function(w,d){
+  var KEY='delman_attr',
+      CAMPOS=['utm_source','utm_medium','utm_campaign','utm_content','utm_term','utm_id',
+              'gclid','gbraid','wbraid','fbclid','ttclid','msclkid'];
+  function ler(){try{return JSON.parse(w.sessionStorage.getItem(KEY))||null;}catch(e){return null;}}
+  function gravar(o){try{w.sessionStorage.setItem(KEY,JSON.stringify(o));}catch(e){}}
+  var q=new URLSearchParams(w.location.search),novo={},achou=false;
+  for(var i=0;i<CAMPOS.length;i++){var v=q.get(CAMPOS[i]);if(v){novo[CAMPOS[i]]=v;achou=true;}}
+  // clique pago novo sobrescreve (last-touch); sem UTM na URL, mantém o que já veio na sessão
+  if(achou||!ler()){
+    novo.landing_page=w.location.href;
+    novo.referrer=d.referrer||'';
+    novo.primeiro_acesso=new Date().toISOString();
+    gravar(novo);
+  }
+  w.DELMAN_ATTR=function(){return ler()||{};};
+})(window,document);</script>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Delman Three Towers · Trabalhe, more ou invista na Jatiúca · Maceió</title>
@@ -829,9 +847,30 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   // pré-seleciona o interesse a partir dos CTAs das torres
   function preset(val){var s=document.getElementById('f-int');if(s){for(var i=0;i<s.options.length;i++){if(s.options[i].value===val||s.options[i].text===val){s.selectedIndex=i;break;}}}}
 
+  // webhook do lead (Make) — dispara e segue; não bloqueia a ida pro WhatsApp
+  var WEBHOOK='https://hook.us2.make.com/qf6xhrsdlb8dws0kr8nhjk1pgxtvhmi3';
+  function enviarWebhook(dados){
+    var p={},k;
+    for(k in dados)if(dados.hasOwnProperty(k))p[k]=dados[k];
+    var attr=window.DELMAN_ATTR?window.DELMAN_ATTR():{};
+    for(k in attr)if(attr.hasOwnProperty(k))p[k]=attr[k];
+    p.projeto='Delman Three Towers';
+    p.page_url=window.location.href;
+    p.enviado_em=new Date().toISOString();
+    // avisa o GTM (mesmo payload, pra GA4/Ads)
+    try{window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'lead_form_submit',lead:p});}catch(err){}
+    // form-urlencoded: content-type safelisted, sem preflight CORS
+    try{
+      var corpo=new URLSearchParams(p);
+      if(navigator.sendBeacon&&navigator.sendBeacon(WEBHOOK,corpo))return;
+      fetch(WEBHOOK,{method:'POST',mode:'no-cors',keepalive:true,body:corpo})['catch'](function(){});
+    }catch(err){}
+  }
+
   // lead -> WhatsApp etiquetado por torre/intenção (parâmetro pra roleta/CRM)
   function enviarLead(e){e.preventDefault();var f=e.target;
     var nome=f.nome.value.trim(),tel=f.tel.value.trim(),email=f.email.value.trim(),interesse=f.interesse.value;
+    enviarWebhook({nome:nome,telefone:tel,email:email,interesse:interesse});
     var msg='Olá! Sou '+nome+' ('+tel+')'+(email?' · '+email:'')+'. Vim pelo site do Delman Three Towers. Interesse: '+interesse+'. Quero falar com um especialista.';
     window.open('https://wa.me/'+WA+'?text='+encodeURIComponent(msg),'_blank');
     return false;}
