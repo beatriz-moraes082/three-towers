@@ -879,7 +879,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     if(card){card.innerHTML='<div class="form-ok" role="status" aria-live="polite">'
       +'<span class="ok-ico"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>'
       +'<h2>Recebemos seus dados, '+esc(nome.split(' ')[0])+'.</h2>'
-      +'<p>Um especialista do Delman Three Towers entra em contato pelo '+esc(tel)+' para apresentar as condições da torre certa pra você.</p></div>';
+      +'<p>Um especialista do Delman Three Towers entra em contato pelo <span style="white-space:nowrap">(82) 9992-5620</span> para apresentar as condições da torre certa pra você.</p></div>';
       // o card encolhe bastante ao trocar o form pela confirmação; recentraliza
       // pra ela não ficar sob o header fixo
       try{card.scrollIntoView({behavior:'smooth',block:'center'});}catch(err){card.scrollIntoView();}}
